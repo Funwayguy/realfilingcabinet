@@ -1,8 +1,0 @@
-{
-    "parent": "block/orientable",
-    "textures": {
-        "top": "realfilingcabinet:blocks/aspect_side",
-        "front": "realfilingcabinet:blocks/aspect_front",
-        "side": "realfilingcabinet:blocks/aspect_side"
-    }
-}
