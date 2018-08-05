@@ -122,7 +122,6 @@ public class ItemEmptyFolder extends Item implements IEmptyFolder {
 	
 	@Override
 	public boolean itemInteractionForEntity(ItemStack stack, EntityPlayer player, EntityLivingBase target, EnumHand hand) {
-		
 		if (!player.world.isRemote && stack.getItemDamage() == FolderType.MOB.ordinal()) {
 			if (!ConfigRFC.mobUpgrade) return false;
 			
