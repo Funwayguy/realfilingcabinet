@@ -1,5 +1,6 @@
 package com.bafomdad.realfilingcabinet.events;
 
+import com.bafomdad.realfilingcabinet.items.capabilities.CapabilityFolder;
 import com.bafomdad.realfilingcabinet.items.capabilities.CapabilityProviderFolder;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
@@ -112,7 +113,7 @@ public class EventHandlerServer {
 	@SubscribeEvent
 	public void onPickupItems(EntityItemPickupEvent event) {
 		
-		if (!ConfigRFC.pickupStuff)
+		if (!ConfigRFC.pickupStuff || event.getEntity().world.isRemote)
 			return;
 		
 		ItemStack estack = event.getItem().getItem();
@@ -136,8 +137,9 @@ public class EventHandlerServer {
 					continue;
 				
 				ItemStack folder = event.getEntityPlayer().inventory.getStackInSlot(i);
-				if (!folder.isEmpty() && folder.getItem() == RFCItems.folder) {
-					if (ItemFolder.getObject(folder) instanceof ItemStack) {
+				if (!folder.isEmpty() && folder.getItem() == RFCItems.folder && folder.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null)) {
+					CapabilityFolder cap = folder.getCapability(CapabilityProviderFolder.FOLDER_CAP, null);
+					if (cap.isItemStack()) {
 						if (folder.getItemDamage() == 2) {
 							if (estack.hasTagCompound() && !NBTUtils.getBoolean(folder, StringLibs.RFC_IGNORENBT, false))
 								return;
@@ -161,7 +163,7 @@ public class EventHandlerServer {
 								break;
 							}
 						}
-						ItemStack folderStack = (ItemStack)ItemFolder.getObject(folder);
+						ItemStack folderStack = cap.getItemStack();
 						if (!folderStack.isEmpty() && ItemStack.areItemsEqual(folderStack, estack)) {
 							if (folder.getItemDamage() == 5 && !ItemStack.areItemStackTagsEqual(folderStack, estack))
 								return;

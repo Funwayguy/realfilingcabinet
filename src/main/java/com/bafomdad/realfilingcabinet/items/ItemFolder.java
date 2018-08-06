@@ -52,6 +52,19 @@ public class ItemFolder extends Item implements IFolder {
 	}
 	
 	@Override
+	public NBTTagCompound getNBTShareTag(ItemStack stack)
+	{
+		if(!stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
+		{
+			return super.getNBTShareTag(stack);
+		}
+		
+		NBTTagCompound tag = stack.hasTagCompound() ? stack.getTagCompound().copy() : new NBTTagCompound();
+		tag.setTag("folderCap", stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).serializeNBT());
+		return tag;
+	}
+	
+	@Override
 	public String getTranslationKey(ItemStack stack) {
 		
 		return getTranslationKey() + "_" + FolderType.values()[stack.getItemDamage()].toString().toLowerCase();
@@ -60,30 +73,36 @@ public class ItemFolder extends Item implements IFolder {
 	@Override
 	public void addInformation(ItemStack stack, World player, List<String> list, ITooltipFlag whatisthis) {
 		
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH)) // Direction doesn't really matter here.
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null)) // Direction doesn't really matter here.
 		{
-			stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).addTooltips(player, list, whatisthis);
+			stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).addTooltips(player, list, whatisthis);
 		}
 	}
 	
 	public ItemStack getContainerItem(ItemStack stack) {
 		
-		long count = getFileSize(stack);
-		long extract = 0;
-		if (count > 0 && getObject(stack) instanceof ItemStack)
-			extract = Math.min(((ItemStack)getObject(stack)).getMaxStackSize(), count);
+		if(!stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
+		{
+			return ItemStack.EMPTY;
+		}
 		
-		if (stack.getTagCompound().hasKey(StringLibs.RFC_TAPED) && NBTUtils.getBoolean(stack, StringLibs.RFC_TAPED, true)) {
+		CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null);
+		long count = cap.getCount();
+		long extract = 0;
+		if (count > 0 && cap.isItemStack())
+			extract = Math.min(cap.getItemStack().getMaxStackSize(), count);
+		
+		if (NBTUtils.getBoolean(stack, StringLibs.RFC_TAPED, false)) {
 			return ItemStack.EMPTY;
 		}
 		ItemStack copy = stack.copy();
-		if (stack.getItemDamage() == 2 && count == 0)
+		if (stack.getItemDamage() == 2 && count == 0) // TODO: This works with 0 items? Might want to test this later
 		{
 			setRemSize(copy, 0);
 		}
 		remove(copy, extract);
 		extractSize = (int)extract;
-
+		
 		return copy;
 	}
 	
@@ -94,9 +113,9 @@ public class ItemFolder extends Item implements IFolder {
 	
 	public static String getFolderDisplayName(ItemStack stack)
 	{
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			return stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).getDisplayName();
+			return stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).getDisplayName();
 		}
 		
 		return "";
@@ -104,18 +123,18 @@ public class ItemFolder extends Item implements IFolder {
 	
 	@Deprecated // Not for save/load use
 	public static String getFileName(ItemStack stack) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			return stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).getContentID();
+			return stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).getContentID();
 		}
 		
 		return "";
 	}
 	
 	public static int getFileMeta(ItemStack stack) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH);
+			CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null);
 			if(cap.isFluidStack())
 			{
 				return cap.getItemStack().getItemDamage();
@@ -128,9 +147,9 @@ public class ItemFolder extends Item implements IFolder {
 	}
 	
 	public static void setFileMeta(ItemStack stack, int meta) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH);
+			CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null);
 			if(cap.isFluidStack())
 			{
 				cap.getItemStack().setItemDamage(meta);
@@ -142,16 +161,16 @@ public class ItemFolder extends Item implements IFolder {
 	}
 	
 	public static void setFileSize(ItemStack stack, long count) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).setCount(count);
+			stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).setCount(count);
 		}
 	}
 	
 	public static long getFileSize(ItemStack stack) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			return stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).getCount();
+			return stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).getCount();
 		}
 		
 		return 0;
@@ -167,19 +186,21 @@ public class ItemFolder extends Item implements IFolder {
 		
 		long current = getFileSize(stack);
 		setFileSize(stack, current + count);
+		
+		System.out.println("New amount = " + (current + count));
 	}
 	
 	public static void setRemSize(ItemStack stack, int count) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).setRemaining(count);
+			stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).setRemaining(count);
 		}
 	}
 	
 	public static int getRemSize(ItemStack stack) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			return stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).getRemaining();
+			return stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).getRemaining();
 		}
 		
 		return 0;
@@ -198,9 +219,9 @@ public class ItemFolder extends Item implements IFolder {
 	}
 	
 	public static NBTTagCompound getItemTag(ItemStack stack) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH);
+			CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null);
 			
 			if(cap.isItemStack())
 			{
@@ -212,9 +233,9 @@ public class ItemFolder extends Item implements IFolder {
 	}
 	
 	public static void setItemTag(ItemStack stack, NBTTagCompound tag) {
-		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(stack.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH);
+			CapabilityFolder cap = stack.getCapability(CapabilityProviderFolder.FOLDER_CAP, null);
 			
 			if(cap.isItemStack())
 			{
@@ -225,9 +246,9 @@ public class ItemFolder extends Item implements IFolder {
 
 	public static Object getObject(ItemStack folder) {
 
-		if(folder.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(folder.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			return folder.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).getContents();
+			return folder.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).getContents();
 		}
 		
 		return null;
@@ -235,9 +256,9 @@ public class ItemFolder extends Item implements IFolder {
 
 	public static boolean setObject(ItemStack folder, Object object) {
 		
-		if(folder.hasCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH))
+		if(folder.hasCapability(CapabilityProviderFolder.FOLDER_CAP, null))
 		{
-			return folder.getCapability(CapabilityProviderFolder.FOLDER_CAP, EnumFacing.NORTH).setContents(object);
+			return folder.getCapability(CapabilityProviderFolder.FOLDER_CAP, null).setContents(object);
 		}
 		
 		return false;

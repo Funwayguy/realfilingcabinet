@@ -54,7 +54,6 @@ public class CapabilityFolder implements INBTSerializable<NBTTagCompound>
             list.add(NBTUtils.getBoolean(rootStack, StringLibs.RFC_PLACEMODE, false) ? TextFormatting.GREEN + TextHelper.localize("tooltip." + RealFilingCabinet.MOD_ID + ".placemode.on") : TextFormatting.RED + TextHelper.localize("tooltip." + RealFilingCabinet.MOD_ID + ".placemode.off"));
         } else if(rootStack.getItemDamage() == ItemFolder.FolderType.MOB.ordinal() && isEntity())
         {
-            // TODO: FIX THIS LATER (creating an entity every frame is a bad idea so don't do that)
             list.add(count + " " + displayName);
             if(!ConfigRFC.mobUpgrade)
             {
@@ -119,10 +118,7 @@ public class CapabilityFolder implements INBTSerializable<NBTTagCompound>
     
     public boolean setContents(Object obj)
     {
-        if(this.contents != null)
-        {
-            return false;
-        } else if(obj instanceof EntityLivingBase)
+        if(obj instanceof EntityLivingBase)
         {
             EntityLivingBase entity = (EntityLivingBase)obj;
             
@@ -161,11 +157,18 @@ public class CapabilityFolder implements INBTSerializable<NBTTagCompound>
             this.contents = ((FluidStack)obj).copy();
             this.count = ((FluidStack)obj).amount;
             return true;
-        }else if(obj instanceof IBlockState)
+        } else if(obj instanceof IBlockState)
         {
             this.displayName = ((IBlockState)obj).getBlock().getLocalizedName();
             this.contents = obj;
             this.count = 1;
+            return true;
+        } else if(obj == null)
+        {
+            this.displayName = "";
+            this.contents = null;
+            this.count = 0;
+            this.remSize = 0;
             return true;
         }
         
@@ -399,6 +402,10 @@ public class CapabilityFolder implements INBTSerializable<NBTTagCompound>
             }
             
             return;
+        } else if(rootStack.hasTagCompound() && rootStack.getTagCompound().hasKey("folderCap"))
+        {
+            nbt = rootStack.getTagCompound().getCompoundTag("folderCap");
+            rootStack.getTagCompound().removeTag("folderCap"); // This might be a bad idea but it works for now
         }
         
         // Back to normal read/write
